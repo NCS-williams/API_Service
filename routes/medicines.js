@@ -1,6 +1,7 @@
 const express = require('express');
 const { Medicines } = require('../database/models');
 const { requireAuth } = require('../middleware/auth');
+const { Op } = require('sequelize');
 
 const router = express.Router();
 
@@ -15,6 +16,43 @@ router.get('/', requireAuth, async (req, res) => {
     });
   } catch (error) {
     console.error('Error fetching medicines:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
+});
+
+// Search medicines by name
+router.get('/search', requireAuth, async (req, res) => {
+  try {
+    const { name } = req.query;
+
+    if (!name) {
+      return res.status(400).json({
+        success: false,
+        message: 'Search name parameter is required'
+      });
+    }
+
+    // Remove all obstacles in name search - case insensitive, partial matches
+    const medicines = await Medicines.findAll({
+      where: {
+        name: {
+          [Op.like]: `%${name}%`
+        }
+      },
+      order: [['name', 'ASC']]
+    });
+
+    res.json({
+      success: true,
+      data: medicines,
+      searchTerm: name,
+      count: medicines.length
+    });
+  } catch (error) {
+    console.error('Error searching medicines:', error);
     res.status(500).json({
       success: false,
       message: 'Internal server error'

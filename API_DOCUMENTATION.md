@@ -75,6 +75,27 @@ Delete user (own profile or admin).
 #### GET /api/medicines
 Get all medicines.
 
+#### GET /api/medicines/search?name=searchTerm
+Search medicines by name (case-insensitive, partial matches).
+
+**Query Parameters:**
+- `name` (required): Search term for medicine name
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "name": "Paracetamol"
+    }
+  ],
+  "searchTerm": "para",
+  "count": 1
+}
+```
+
 #### GET /api/medicines/:id
 Get medicine by ID.
 
@@ -95,14 +116,13 @@ Get all pharmacies (excludes passwords).
 #### GET /api/pharmacy/:id
 Get pharmacy by ID.
 
-#### POST /api/pharmacy
-Create new pharmacy.
-
 #### PUT /api/pharmacy/:id
 Update pharmacy (own profile only for pharmacy role).
 
 #### DELETE /api/pharmacy/:id
 Delete pharmacy (own profile only for pharmacy role).
+
+**Note:** Pharmacy registration is handled through `/api/auth/register` with `userType: "pharmacy"`
 
 ## Fournisseur (Role: any authenticated user)
 
@@ -112,14 +132,13 @@ Get all fournisseurs (excludes passwords).
 #### GET /api/fournisseur/:id
 Get fournisseur by ID.
 
-#### POST /api/fournisseur
-Create new fournisseur.
-
 #### PUT /api/fournisseur/:id
 Update fournisseur (own profile only for fournisseur role).
 
 #### DELETE /api/fournisseur/:id
 Delete fournisseur (own profile only for fournisseur role).
+
+**Note:** Fournisseur registration is handled through `/api/auth/register` with `userType: "fournisseur"`
 
 ## Commands
 

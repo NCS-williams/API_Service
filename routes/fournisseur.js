@@ -52,56 +52,6 @@ router.get('/:id', requireAuth, async (req, res) => {
   }
 });
 
-// Create new fournisseur
-router.post('/', requireAuth, async (req, res) => {
-  try {
-    const { username, password, name, location, phoneNumber } = req.body;
-
-    if (!username || !password || !name || !location || !phoneNumber) {
-      return res.status(400).json({
-        success: false,
-        message: 'All fields are required'
-      });
-    }
-
-    // Check if username already exists
-    const existingFournisseur = await Fournisseur.findOne({ where: { username } });
-    if (existingFournisseur) {
-      return res.status(409).json({
-        success: false,
-        message: 'Username already exists'
-      });
-    }
-
-    const hashedPassword = await hashPassword(password);
-    const fournisseur = await Fournisseur.create({
-      username,
-      password: hashedPassword,
-      name,
-      location,
-      phoneNumber
-    });
-
-    res.status(201).json({
-      success: true,
-      message: 'Fournisseur created successfully',
-      data: {
-        id: fournisseur.id,
-        username: fournisseur.username,
-        name: fournisseur.name,
-        location: fournisseur.location,
-        phoneNumber: fournisseur.phoneNumber
-      }
-    });
-  } catch (error) {
-    console.error('Error creating fournisseur:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Internal server error'
-    });
-  }
-});
-
 // Update fournisseur
 router.put('/:id', requireAuth, async (req, res) => {
   try {
