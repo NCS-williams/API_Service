@@ -76,6 +76,11 @@ const Medicines = sequelize.define('Medicines', {
     type: DataTypes.STRING,
     allowNull: false,
     field: 'Name'
+  },
+  price: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: false,
+    field: 'Price'
   }
 }, {
   tableName: 'Medicines',

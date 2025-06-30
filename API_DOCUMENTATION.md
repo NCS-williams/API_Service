@@ -88,7 +88,8 @@ Search medicines by name (case-insensitive, partial matches).
   "data": [
     {
       "id": 1,
-      "name": "Paracetamol"
+      "name": "Paracetamol",
+      "price": "5.99"
     }
   ],
   "searchTerm": "para",
@@ -102,8 +103,24 @@ Get medicine by ID.
 #### POST /api/medicines
 Create new medicine.
 
+**Body:**
+```json
+{
+  "name": "string",
+  "price": 15.99
+}
+```
+
 #### PUT /api/medicines/:id
 Update medicine.
+
+**Body:**
+```json
+{
+  "name": "string (optional)",
+  "price": 15.99 (optional)
+}
+```
 
 #### DELETE /api/medicines/:id
 Delete medicine.

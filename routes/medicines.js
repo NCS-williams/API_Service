@@ -89,12 +89,19 @@ router.get('/:id', requireAuth, async (req, res) => {
 // Create new medicine
 router.post('/', requireAuth, async (req, res) => {
   try {
-    const { name } = req.body;
+    const { name, price } = req.body;
 
-    if (!name) {
+    if (!name || price === undefined) {
       return res.status(400).json({
         success: false,
-        message: 'Medicine name is required'
+        message: 'Medicine name and price are required'
+      });
+    }
+
+    if (price < 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Price cannot be negative'
       });
     }
 
@@ -107,7 +114,7 @@ router.post('/', requireAuth, async (req, res) => {
       });
     }
 
-    const medicine = await Medicines.create({ name });
+    const medicine = await Medicines.create({ name, price });
 
     res.status(201).json({
       success: true,
@@ -127,12 +134,19 @@ router.post('/', requireAuth, async (req, res) => {
 router.put('/:id', requireAuth, async (req, res) => {
   try {
     const { id } = req.params;
-    const { name } = req.body;
+    const { name, price } = req.body;
 
-    if (!name) {
+    if (!name && price === undefined) {
       return res.status(400).json({
         success: false,
-        message: 'Medicine name is required'
+        message: 'Medicine name or price is required'
+      });
+    }
+
+    if (price !== undefined && price < 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Price cannot be negative'
       });
     }
 
@@ -144,7 +158,11 @@ router.put('/:id', requireAuth, async (req, res) => {
       });
     }
 
-    await medicine.update({ name });
+    const updateData = {};
+    if (name) updateData.name = name;
+    if (price !== undefined) updateData.price = price;
+
+    await medicine.update(updateData);
 
     res.json({
       success: true,
