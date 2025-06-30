@@ -5,25 +5,7 @@ const { Op } = require('sequelize');
 
 const router = express.Router();
 
-// Get all medicines
-router.get('/', requireAuth, async (req, res) => {
-  try {
-    const medicines = await Medicines.findAll();
-
-    res.json({
-      success: true,
-      data: medicines
-    });
-  } catch (error) {
-    console.error('Error fetching medicines:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Internal server error'
-    });
-  }
-});
-
-// Search medicines by name
+// Search medicines by name (must come before /:id route)
 router.get('/search', requireAuth, async (req, res) => {
   try {
     const { name } = req.query;
@@ -53,6 +35,24 @@ router.get('/search', requireAuth, async (req, res) => {
     });
   } catch (error) {
     console.error('Error searching medicines:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
+});
+
+// Get all medicines
+router.get('/', requireAuth, async (req, res) => {
+  try {
+    const medicines = await Medicines.findAll();
+
+    res.json({
+      success: true,
+      data: medicines
+    });
+  } catch (error) {
+    console.error('Error fetching medicines:', error);
     res.status(500).json({
       success: false,
       message: 'Internal server error'
