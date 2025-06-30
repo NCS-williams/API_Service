@@ -6,6 +6,7 @@ const router = express.Router();
 
 // Login endpoint - handles all user types
 router.post('/login', async (req, res) => {
+  console.log('Login request received:', req.body);
   try {
     const { username, password, userType } = req.body;
 
