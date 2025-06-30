@@ -1,64 +1,121 @@
-const session = require('express-session');
 const bcrypt = require('bcrypt');
+const { v4: uuidv4 } = require('uuid');
+const { Sessions } = require('../database/models');
+const { Op } = require('sequelize');
 
-// Session configuration
-const sessionConfig = {
-  secret: 'pharmacy-system-secret-key-2025',
-  resave: false,
-  saveUninitialized: false,
-  cookie: {
-    secure: false, // Set to true in production with HTTPS
-    httpOnly: true,
-    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+// Simple session management
+const createSession = async (user, userType) => {
+  const sessionId = uuidv4();
+  const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+  
+  // Store user data as JSON string
+  const userData = {
+    id: user.id,
+    username: user.username,
+    role: userType,
+    name: user.name || null
+  };
+
+  await Sessions.create({
+    id: sessionId,
+    userId: user.id,
+    userType: userType,
+    userData: JSON.stringify(userData),
+    expiresAt: expiresAt
+  });
+
+  return sessionId;
+};
+
+const getSession = async (sessionId) => {
+  if (!sessionId) return null;
+
+  // Simple lookup with expiration check
+  const session = await Sessions.findOne({
+    where: {
+      id: sessionId,
+      expiresAt: { [Op.gt]: new Date() }
+    }
+  });
+
+  return session ? JSON.parse(session.userData) : null;
+};
+
+const deleteSession = async (sessionId) => {
+  if (sessionId) {
+    await Sessions.destroy({ where: { id: sessionId } });
   }
 };
 
-// Authentication middleware
-const requireAuth = (req, res, next) => {
-  if (!req.session || !req.session.user) {
-    return res.status(401).json({ 
-      success: false, 
-      message: 'Authentication required' 
-    });
-  }
-  next();
+// Clean up expired sessions
+const cleanExpiredSessions = async () => {
+  await Sessions.destroy({
+    where: { expiresAt: { [Op.lt]: new Date() } }
+  });
 };
 
-// Role-based authorization middleware
-const requireRole = (role) => {
-  return (req, res, next) => {
-    if (!req.session || !req.session.user) {
+// Simple authentication middleware
+const requireAuth = async (req, res, next) => {
+  try {
+    // Get session ID from header or cookie (supports multiple formats)
+    const sessionId = req.headers.authorization?.replace('Bearer ', '') || 
+                     req.headers['x-session-id'] ||
+                     req.cookies?.sessionId;
+    
+    if (!sessionId) {
       return res.status(401).json({ 
         success: false, 
-        message: 'Authentication required' 
+        message: 'Session ID required' 
       });
-
     }
+
+    // Simple session check
+    const user = await getSession(sessionId);
+    if (!user) {
+      return res.status(401).json({ 
+        success: false, 
+        message: 'Invalid or expired session' 
+      });
+    }
+
+    // Attach user to request
+    req.user = user;
+    req.sessionId = sessionId;
+    next();
     
-    if (req.session.user.role !== role) {
+  } catch (error) {
+    console.error('Auth error:', error);
+    res.status(500).json({ success: false, message: 'Authentication error' });
+  }
+};
+
+// Simple role check middleware
+const requireRole = (role) => {
+  return (req, res, next) => {
+    if (!req.user || req.user.role !== role) {
       return res.status(403).json({ 
         success: false, 
-        message: `Access denied. ${role} role required.` 
+        message: `${role} access required` 
       });
     }
-    
     next();
   };
 };
 
-// Hash password utility
+// Password utilities
 const hashPassword = async (password) => {
-  const saltRounds = 10;
-  return await bcrypt.hash(password, saltRounds);
+  return await bcrypt.hash(password, 10);
 };
 
-// Compare password utility
 const comparePassword = async (password, hashedPassword) => {
   return await bcrypt.compare(password, hashedPassword);
 };
 
 module.exports = {
-  sessionConfig,
+  createSession,
+  getSession,
+  deleteSession,
+  cleanExpiredSessions,
   requireAuth,
   requireRole,
   hashPassword,

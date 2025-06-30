@@ -1,5 +1,5 @@
 const express = require('express');
-const { hashPassword, comparePassword } = require('../middleware/auth');
+const { createSession, deleteSession, hashPassword, comparePassword } = require('../middleware/auth');
 const { Users, Pharmacy, Fournisseur } = require('../database/models');
 
 const router = express.Router();
@@ -58,16 +58,20 @@ router.post('/login', async (req, res) => {
     }
 
     // Create session
-    req.session.user = {
-      id: user.id,
-      username: user.username,
-      role: userType,
-      name: user.name || null
-    };
+    const sessionId = await createSession(user, userType);
+
+    // Set session cookie (secure: true only in production)
+    res.cookie('sessionId', sessionId, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    });
 
     res.json({
       success: true,
       message: 'Login successful',
+      sessionId: sessionId, // Still return in response for clients who prefer headers
       user: {
         id: user.id,
         username: user.username,
@@ -168,34 +172,138 @@ router.post('/register', async (req, res) => {
 });
 
 // Logout endpoint
-router.post('/logout', (req, res) => {
-  req.session.destroy((err) => {
-    if (err) {
-      return res.status(500).json({
-        success: false,
-        message: 'Could not log out'
-      });
+router.post('/logout', async (req, res) => {
+  try {
+    const sessionId = req.headers.authorization?.replace('Bearer ', '') || 
+                     req.headers['x-session-id'] ||
+                     req.cookies?.sessionId;
+    
+    if (sessionId) {
+      await deleteSession(sessionId);
     }
+    
+    // Clear session cookie
+    res.clearCookie('sessionId', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict'
+    });
+    
     res.json({
       success: true,
       message: 'Logout successful'
     });
-  });
+  } catch (error) {
+    console.error('Logout error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
 });
 
 // Get current user
-router.get('/me', (req, res) => {
-  if (!req.session || !req.session.user) {
-    return res.status(401).json({
+router.get('/me', async (req, res) => {
+  try {
+    const sessionId = req.headers.authorization?.replace('Bearer ', '') || 
+                     req.headers['x-session-id'] ||
+                     req.cookies?.sessionId;
+    
+    if (!sessionId) {
+      return res.status(401).json({
+        success: false,
+        message: 'Session ID required'
+      });
+    }
+
+    const { getSession } = require('../middleware/auth');
+    const user = await getSession(sessionId);
+    
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid or expired session'
+      });
+    }
+
+    res.json({
+      success: true,
+      user: user
+    });
+  } catch (error) {
+    console.error('Get user error:', error);
+    res.status(500).json({
       success: false,
-      message: 'Not authenticated'
+      message: 'Internal server error'
     });
   }
+});
 
-  res.json({
-    success: true,
-    user: req.session.user
-  });
+// Get all active sessions (admin/debug route)
+router.get('/sessions', async (req, res) => {
+  try {
+    const sessionId = req.headers.authorization?.replace('Bearer ', '') || 
+                     req.headers['x-session-id'] ||
+                     req.cookies?.sessionId;
+    
+    if (!sessionId) {
+      return res.status(401).json({
+        success: false,
+        message: 'Session ID required'
+      });
+    }
+
+    const { getSession } = require('../middleware/auth');
+    const currentUser = await getSession(sessionId);
+    
+    if (!currentUser) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid or expired session'
+      });
+    }
+
+    // Only allow admin users (you can modify this logic as needed)
+    // For now, only pharmacy users can view sessions
+    if (currentUser.role !== 'pharmacy') {
+      return res.status(403).json({
+        success: false,
+        message: 'Admin access required'
+      });
+    }
+
+    const { Sessions } = require('../database/models');
+    const { Op } = require('sequelize');
+    
+    const activeSessions = await Sessions.findAll({
+      where: {
+        expiresAt: { [Op.gt]: new Date() }
+      },
+      attributes: ['id', 'userId', 'userType', 'userData', 'createdAt', 'expiresAt'],
+      order: [['createdAt', 'DESC']]
+    });
+
+    const sessionsData = activeSessions.map(session => ({
+      sessionId: session.id,
+      userId: session.userId,
+      userType: session.userType,
+      user: JSON.parse(session.userData),
+      createdAt: session.createdAt,
+      expiresAt: session.expiresAt
+    }));
+
+    res.json({
+      success: true,
+      count: sessionsData.length,
+      sessions: sessionsData
+    });
+  } catch (error) {
+    console.error('Get sessions error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
 });
 
 module.exports = router;

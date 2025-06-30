@@ -14,8 +14,8 @@ router.get('/', requireAuth, async (req, res) => {
     if (userId) where.userId = userId;
 
     // Role-based filtering
-    if (req.session.user.role === 'user') {
-      where.userId = req.session.user.id;
+    if (req.user.role === 'user') {
+      where.userId = req.user.id;
     }
 
     const demands = await DemandUsers.findAll({
@@ -59,7 +59,7 @@ router.get('/:id', requireAuth, async (req, res) => {
     }
 
     // Check access rights
-    if (req.session.user.role === 'user' && demand.userId !== req.session.user.id) {
+    if (req.user.role === 'user' && demand.userId !== req.user.id) {
       return res.status(403).json({
         success: false,
         message: 'Access denied'
@@ -102,7 +102,7 @@ router.post('/', requireRole('user'), async (req, res) => {
 
     const demand = await DemandUsers.create({
       medId,
-      userId: req.session.user.id,
+      userId: req.user.id,
       date: new Date()
     });
 
@@ -142,7 +142,7 @@ router.put('/:id', requireRole('user'), async (req, res) => {
       });
     }
 
-    if (demand.userId !== req.session.user.id) {
+    if (demand.userId !== req.user.id) {
       return res.status(403).json({
         success: false,
         message: 'Access denied'
@@ -199,7 +199,7 @@ router.delete('/:id', requireRole('user'), async (req, res) => {
       });
     }
 
-    if (demand.userId !== req.session.user.id) {
+    if (demand.userId !== req.user.id) {
       return res.status(403).json({
         success: false,
         message: 'Access denied'

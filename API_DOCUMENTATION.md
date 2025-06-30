@@ -2,7 +2,13 @@
 
 ## Authentication
 
-The API uses session-based authentication. All protected endpoints require authentication.
+The API uses database-stored session authentication with support for both cookies and headers. Sessions are stored in the database and expire after 24 hours.
+
+### Session Management
+The API supports multiple authentication methods:
+1. **HTTP Cookies** (Recommended): Session ID is automatically set as an httpOnly cookie on login
+2. **Authorization Header**: `Bearer <sessionId>`
+3. **Custom Header**: `x-session-id: <sessionId>`
 
 ### Auth Endpoints
 
@@ -23,6 +29,7 @@ Login for all user types.
 {
   "success": true,
   "message": "Login successful",
+  "sessionId": "uuid-session-id",
   "user": {
     "id": 1,
     "username": "john_doe",
@@ -32,26 +39,61 @@ Login for all user types.
 }
 ```
 
-#### POST /api/auth/register
-Register new user.
+**Cookie:** The session ID is automatically set as an httpOnly cookie named `sessionId`
 
-**Body:**
+**Important:** 
+- If using cookies (recommended), no additional setup is required - the cookie will be sent automatically
+- If not using cookies, store the `sessionId` from the response and include it in subsequent requests
+
+#### Authentication Methods
+For all protected endpoints, authentication can be provided via:
+1. **Cookie** (automatic): `sessionId` cookie
+2. **Authorization Header:** `Bearer <sessionId>`
+3. **Custom Header:** `x-session-id: <sessionId>`
+
+#### POST /api/auth/logout
+Logout current user, destroy session, and clear cookies.
+
+**Authentication:** Required (any method)
+**Response:**
 ```json
 {
-  "username": "string",
-  "password": "string",
-  "userType": "user|pharmacy|fournisseur",
-  "name": "string (required for pharmacy/fournisseur)",
-  "location": "string (required for pharmacy/fournisseur)",
-  "phoneNumber": "string (required for pharmacy/fournisseur)"
+  "success": true,
+  "message": "Logout successful"
 }
 ```
 
-#### POST /api/auth/logout
-Logout current user.
-
 #### GET /api/auth/me
 Get current user information.
+
+**Authentication:** Required (any method)
+
+#### GET /api/auth/sessions
+Get all active sessions (admin/debug endpoint).
+
+**Authentication:** Required (pharmacy role only)
+**Response:**
+```json
+{
+  "success": true,
+  "count": 3,
+  "sessions": [
+    {
+      "sessionId": "uuid-session-id",
+      "userId": 1,
+      "userType": "pharmacy",
+      "user": {
+        "id": 1,
+        "username": "pharmacy1",
+        "role": "pharmacy",
+        "name": "Main Pharmacy"
+      },
+      "createdAt": "2024-01-01T12:00:00.000Z",
+      "expiresAt": "2024-01-02T12:00:00.000Z"
+    }
+  ]
+}
+```
 
 ## Users (Role: any authenticated user)
 

@@ -1,21 +1,37 @@
 const express = require('express');
-const session = require('express-session');
 const cors = require('cors');
+const cookieParser = require('cookie-parser');
 const { initializeDatabase } = require('./database/init');
-const { sessionConfig } = require('./middleware/auth');
+const { cleanExpiredSessions } = require('./middleware/auth');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middleware
-app.use(cors());
-
+app.use(cors(
+  {
+    origin: 'http://localhost:5173', // Allow all origins for development
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'x-session-id'],
+    credentials: true // Allow cookies to be sent
+  }
+));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(session(sessionConfig));
+app.use(cookieParser());
 
 // Initialize database
 initializeDatabase();
+
+// Clean expired sessions every hour
+setInterval(async () => {
+  try {
+    await cleanExpiredSessions();
+    console.log('Cleaned expired sessions');
+  } catch (error) {
+    console.error('Error cleaning expired sessions:', error);
+  }
+}, 60 * 60 * 1000); // 1 hour
 
 // Basic route
 app.get('/', (req, res) => {

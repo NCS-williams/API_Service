@@ -67,7 +67,7 @@ router.put('/:id', requireAuth, async (req, res) => {
     }
 
     // Check if current user can update this pharmacy
-    if (req.session.user.role === 'pharmacy' && req.session.user.id != id) {
+    if (req.user.role === 'pharmacy' && req.user.id != id) {
       return res.status(403).json({
         success: false,
         message: 'Access denied'
@@ -117,7 +117,7 @@ router.delete('/:id', requireAuth, async (req, res) => {
     }
 
     // Check if current user can delete this pharmacy
-    if (req.session.user.role === 'pharmacy' && req.session.user.id != id) {
+    if (req.user.role === 'pharmacy' && req.user.id != id) {
       return res.status(403).json({
         success: false,
         message: 'Access denied'

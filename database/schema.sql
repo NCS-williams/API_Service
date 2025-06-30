@@ -67,6 +67,16 @@ CREATE TABLE IF NOT EXISTS Demand_Users (
     FOREIGN KEY (User_ID) REFERENCES Users(ID)
 );
 
+-- Sessions table
+CREATE TABLE IF NOT EXISTS Sessions (
+    session_id VARCHAR(255) PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    user_type VARCHAR(50) NOT NULL,
+    user_data TEXT NOT NULL,
+    expires_at DATETIME NOT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Sample data insertion queries (optional)
 -- Users
 INSERT OR IGNORE INTO Users (Username, Password) VALUES 

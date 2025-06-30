@@ -9,7 +9,7 @@ const router = express.Router();
 router.get('/search', requireAuth, async (req, res) => {
   try {
     const { name } = req.query;
-
+    console.log(`Searching medicines with name: ${name}`);
     if (!name) {
       return res.status(400).json({
         success: false,

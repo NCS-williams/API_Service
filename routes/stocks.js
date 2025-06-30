@@ -15,8 +15,8 @@ router.get('/', requireAuth, async (req, res) => {
     if (pharmId) where.pharmId = pharmId;
 
     // Role-based filtering
-    if (req.session.user.role === 'pharmacy') {
-      where.pharmId = req.session.user.id;
+    if (req.user.role === 'pharmacy') {
+      where.pharmId = req.user.id;
     }
 
     const stocks = await Stocks.findAll({
@@ -102,7 +102,7 @@ router.get('/:id', requireAuth, async (req, res) => {
     }
 
     // Check access rights
-    if (req.session.user.role === 'pharmacy' && stock.pharmId !== req.session.user.id) {
+    if (req.user.role === 'pharmacy' && stock.pharmId !== req.user.id) {
       return res.status(403).json({
         success: false,
         message: 'Access denied'
@@ -146,7 +146,7 @@ router.post('/', requireRole('pharmacy'), async (req, res) => {
     // Check if stock already exists for this pharmacy and medicine
     const existingStock = await Stocks.findOne({
       where: {
-        pharmId: req.session.user.id,
+        pharmId: req.user.id,
         medicalId
       }
     });
@@ -159,7 +159,7 @@ router.post('/', requireRole('pharmacy'), async (req, res) => {
     }
 
     const stock = await Stocks.create({
-      pharmId: req.session.user.id,
+      pharmId: req.user.id,
       medicalId,
       numOfUnits
     });
@@ -207,7 +207,7 @@ router.put('/:id', requireRole('pharmacy'), async (req, res) => {
       });
     }
 
-    if (stock.pharmId !== req.session.user.id) {
+    if (stock.pharmId !== req.user.id) {
       return res.status(403).json({
         success: false,
         message: 'Access denied'
@@ -259,7 +259,7 @@ router.patch('/:id/add', requireRole('pharmacy'), async (req, res) => {
       });
     }
 
-    if (stock.pharmId !== req.session.user.id) {
+    if (stock.pharmId !== req.user.id) {
       return res.status(403).json({
         success: false,
         message: 'Access denied'
@@ -312,7 +312,7 @@ router.patch('/:id/remove', requireRole('pharmacy'), async (req, res) => {
       });
     }
 
-    if (stock.pharmId !== req.session.user.id) {
+    if (stock.pharmId !== req.user.id) {
       return res.status(403).json({
         success: false,
         message: 'Access denied'
@@ -364,7 +364,7 @@ router.delete('/:id', requireRole('pharmacy'), async (req, res) => {
       });
     }
 
-    if (stock.pharmId !== req.session.user.id) {
+    if (stock.pharmId !== req.user.id) {
       return res.status(403).json({
         success: false,
         message: 'Access denied'

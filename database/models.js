@@ -254,6 +254,44 @@ const DemandUsers = sequelize.define('DemandUsers', {
   timestamps: false
 });
 
+// Sessions table for session storage
+const Sessions = sequelize.define('Sessions', {
+  id: {
+    type: DataTypes.STRING,
+    primaryKey: true,
+    field: 'session_id'
+  },
+  userId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    field: 'user_id'
+  },
+  userType: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    field: 'user_type'
+  },
+  userData: {
+    type: DataTypes.TEXT,
+    allowNull: false,
+    field: 'user_data'
+  },
+  expiresAt: {
+    type: DataTypes.DATE,
+    allowNull: false,
+    field: 'expires_at'
+  },
+  createdAt: {
+    type: DataTypes.DATE,
+    allowNull: false,
+    defaultValue: DataTypes.NOW,
+    field: 'created_at'
+  }
+}, {
+  tableName: 'Sessions',
+  timestamps: false
+});
+
 // Define associations
 // Commands associations
 Commands.belongsTo(Medicines, { foreignKey: 'medId', as: 'medicine' });
@@ -288,5 +326,6 @@ module.exports = {
   Commands,
   Fournisseur,
   Stocks,
-  DemandUsers
+  DemandUsers,
+  Sessions
 };

@@ -111,7 +111,7 @@ router.put('/:id', requireAuth, async (req, res) => {
     }
 
     // Check if current user can update this user (either own profile or admin)
-    if (req.session.user.id != id && req.session.user.role !== 'admin') {
+    if (req.user.id != id && req.user.role !== 'admin') {
       return res.status(403).json({
         success: false,
         message: 'Access denied'
@@ -155,7 +155,7 @@ router.delete('/:id', requireAuth, async (req, res) => {
     }
 
     // Check if current user can delete this user (either own profile or admin)
-    if (req.session.user.id != id && req.session.user.role !== 'admin') {
+    if (req.user.id != id && req.user.role !== 'admin') {
       return res.status(403).json({
         success: false,
         message: 'Access denied'

@@ -16,10 +16,10 @@ router.get('/', requireAuth, async (req, res) => {
     if (fournisseurId) where.fournisseurId = fournisseurId;
 
     // Role-based filtering
-    if (req.session.user.role === 'pharmacy') {
-      where.pharmId = req.session.user.id;
-    } else if (req.session.user.role === 'fournisseur') {
-      where.fournisseurId = req.session.user.id;
+    if (req.user.role === 'pharmacy') {
+      where.pharmId = req.user.id;
+    } else if (req.user.role === 'fournisseur') {
+      where.fournisseurId = req.user.id;
     }
 
     const commands = await Commands.findAll({
@@ -90,14 +90,14 @@ router.get('/:id', requireAuth, async (req, res) => {
     }
 
     // Check access rights
-    if (req.session.user.role === 'pharmacy' && command.pharmId !== req.session.user.id) {
+    if (req.user.role === 'pharmacy' && command.pharmId !== req.user.id) {
       return res.status(403).json({
         success: false,
         message: 'Access denied'
       });
     }
 
-    if (req.session.user.role === 'fournisseur' && command.fournisseurId !== req.session.user.id) {
+    if (req.user.role === 'fournisseur' && command.fournisseurId !== req.user.id) {
       return res.status(403).json({
         success: false,
         message: 'Access denied'
@@ -140,7 +140,7 @@ router.post('/', requireRole('pharmacy'), async (req, res) => {
 
     const command = await Commands.create({
       medId,
-      pharmId: req.session.user.id,
+      pharmId: req.user.id,
       numOfUnits,
       startDate: new Date(),
       state: 'awaiting',
@@ -190,7 +190,7 @@ router.patch('/:id/accept', requireRole('fournisseur'), async (req, res) => {
     }
 
     await command.update({
-      fournisseurId: req.session.user.id,
+      fournisseurId: req.user.id,
       state: 'on_delivery'
     });
 
@@ -230,7 +230,7 @@ router.patch('/:id/deliver', requireRole('fournisseur'), async (req, res) => {
       });
     }
 
-    if (command.fournisseurId !== req.session.user.id) {
+    if (command.fournisseurId !== req.user.id) {
       return res.status(403).json({
         success: false,
         message: 'Access denied'
@@ -285,7 +285,7 @@ router.put('/:id', requireRole('pharmacy'), async (req, res) => {
       });
     }
 
-    if (command.pharmId !== req.session.user.id) {
+    if (command.pharmId !== req.user.id) {
       return res.status(403).json({
         success: false,
         message: 'Access denied'
@@ -339,7 +339,7 @@ router.delete('/:id', requireRole('pharmacy'), async (req, res) => {
       });
     }
 
-    if (command.pharmId !== req.session.user.id) {
+    if (command.pharmId !== req.user.id) {
       return res.status(403).json({
         success: false,
         message: 'Access denied'
