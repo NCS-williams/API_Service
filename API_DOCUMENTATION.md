@@ -210,6 +210,46 @@ Get all stocks with filters.
 - **Filters:** pharmId
 - **Auto-filtering:** Pharmacy users see only their stocks
 
+### GET /api/stocks/by-medicine/:medicineId
+Get all stocks for a specific medicine (shows which pharmacies have this medicine).
+- **Role:** Any authenticated user
+- **Returns:** All pharmacies that have the medicine in stock (numOfUnits > 0)
+- **Ordered by:** Highest stock quantity first
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "pharmId": 1,
+      "medicalId": 1,
+      "numOfUnits": 50,
+      "medicine": {
+        "id": 1,
+        "name": "Paracetamol",
+        "price": "5.99"
+      },
+      "pharmacy": {
+        "id": 1,
+        "username": "pharma_central",
+        "name": "Central Pharmacy",
+        "location": "Downtown",
+        "phoneNumber": "+1234567890"
+      }
+    }
+  ],
+  "medicine": {
+    "id": 1,
+    "name": "Paracetamol",
+    "price": "5.99"
+  },
+  "totalPharmacies": 1,
+  "totalUnits": 50
+}
+```
+
 ### GET /api/stocks/:id
 Get stock by ID.
 - **Role:** Any authenticated user with access rights

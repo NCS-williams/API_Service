@@ -1,6 +1,7 @@
 const express = require('express');
 const { Stocks, Medicines, Pharmacy } = require('../database/models');
 const { requireAuth, requireRole } = require('../middleware/auth');
+const { Op } = require('sequelize');
 
 const router = express.Router();
 
@@ -33,6 +34,48 @@ router.get('/', requireAuth, async (req, res) => {
     });
   } catch (error) {
     console.error('Error fetching stocks:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
+});
+
+// Get stocks by medicine ID (show which pharmacies have this medicine)
+router.get('/by-medicine/:medicineId', requireAuth, async (req, res) => {
+  try {
+    const { medicineId } = req.params;
+
+    // Verify medicine exists
+    const medicine = await Medicines.findByPk(medicineId);
+    if (!medicine) {
+      return res.status(404).json({
+        success: false,
+        message: 'Medicine not found'
+      });
+    }
+
+    const stocks = await Stocks.findAll({
+      where: {
+        medicalId: medicineId,
+        numOfUnits: { [Op.gt]: 0 } // Only show stocks with available units
+      },
+      include: [
+        { model: Medicines, as: 'medicine' },
+        { model: Pharmacy, as: 'pharmacy', attributes: { exclude: ['password'] } }
+      ],
+      order: [['numOfUnits', 'DESC']] // Order by highest stock first
+    });
+
+    res.json({
+      success: true,
+      data: stocks,
+      medicine: medicine,
+      totalPharmacies: stocks.length,
+      totalUnits: stocks.reduce((sum, stock) => sum + stock.numOfUnits, 0)
+    });
+  } catch (error) {
+    console.error('Error fetching stocks by medicine:', error);
     res.status(500).json({
       success: false,
       message: 'Internal server error'
