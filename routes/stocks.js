@@ -123,7 +123,7 @@ router.get('/:id', requireAuth, async (req, res) => {
 });
 
 // Create new stock (pharmacy only)
-router.post('/', requireRole('pharmacy'), async (req, res) => {
+router.post('/', requireAuth,requireRole('pharmacy'), async (req, res) => {
   try {
     const { medicalId, numOfUnits } = req.body;
 
