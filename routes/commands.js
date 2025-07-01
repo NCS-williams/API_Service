@@ -218,7 +218,7 @@ router.patch('/:id/accept', requireAuth,requireRole('fournisseur'), async (req, 
 });
 
 // Mark command as delivered (fournisseur only)
-router.patch('/:id/deliver', requireRole('fournisseur'), async (req, res) => {
+router.patch('/:id/deliver', requireAuth,requireRole('fournisseur'), async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -272,7 +272,7 @@ router.patch('/:id/deliver', requireRole('fournisseur'), async (req, res) => {
 });
 
 // Update command (pharmacy only, limited updates)
-router.put('/:id', requireRole('pharmacy'), async (req, res) => {
+router.put('/:id',requireAuth, requireRole('pharmacy'), async (req, res) => {
   try {
     const { id } = req.params;
     const { numOfUnits } = req.body;
@@ -327,7 +327,7 @@ router.put('/:id', requireRole('pharmacy'), async (req, res) => {
 });
 
 // Delete command (pharmacy only, only if awaiting)
-router.delete('/:id', requireRole('pharmacy'), async (req, res) => {
+router.delete('/:id', requireAuth,requireRole('pharmacy'), async (req, res) => {
   try {
     const { id } = req.params;
 

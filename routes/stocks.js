@@ -187,7 +187,7 @@ router.post('/', requireAuth,requireRole('pharmacy'), async (req, res) => {
 });
 
 // Update stock (pharmacy only)
-router.put('/:id', requireRole('pharmacy'), async (req, res) => {
+router.put('/:id', requireAuth,requireRole('pharmacy'), async (req, res) => {
   try {
     const { id } = req.params;
     const { numOfUnits } = req.body;
@@ -239,7 +239,7 @@ router.put('/:id', requireRole('pharmacy'), async (req, res) => {
 });
 
 // Add to stock (pharmacy only)
-router.patch('/:id/add', requireRole('pharmacy'), async (req, res) => {
+router.patch('/:id/add', requireAuth,requireRole('pharmacy'), async (req, res) => {
   try {
     const { id } = req.params;
     const { units } = req.body;
@@ -292,7 +292,7 @@ router.patch('/:id/add', requireRole('pharmacy'), async (req, res) => {
 });
 
 // Remove from stock (pharmacy only)
-router.patch('/:id/remove', requireRole('pharmacy'), async (req, res) => {
+router.patch('/:id/remove', requireAuth,requireRole('pharmacy'), async (req, res) => {
   try {
     const { id } = req.params;
     const { units } = req.body;
@@ -352,7 +352,7 @@ router.patch('/:id/remove', requireRole('pharmacy'), async (req, res) => {
 });
 
 // Delete stock (pharmacy only)
-router.delete('/:id', requireRole('pharmacy'), async (req, res) => {
+router.delete('/:id', requireAuth,requireRole('pharmacy'), async (req, res) => {
   try {
     const { id } = req.params;
 
