@@ -46,7 +46,7 @@ router.get('/', requireAuth, async (req, res) => {
 });
 
 // Get pending commands (for fournisseurs)
-router.get('/pending', requireRole('fournisseur'), async (req, res) => {
+router.get('/pending', requireAuth,requireRole('fournisseur'), async (req, res) => {
   try {
     const commands = await Commands.findAll({
       where: { state: 'awaiting' },
@@ -118,7 +118,7 @@ router.get('/:id', requireAuth, async (req, res) => {
 });
 
 // Create new command (pharmacy only)
-router.post('/', requireRole('pharmacy'), async (req, res) => {
+router.post('/',requireAuth, requireRole('pharmacy'), async (req, res) => {
   try {
     const { medId, numOfUnits } = req.body;
 
@@ -170,7 +170,7 @@ router.post('/', requireRole('pharmacy'), async (req, res) => {
 });
 
 // Accept command (fournisseur only)
-router.patch('/:id/accept', requireRole('fournisseur'), async (req, res) => {
+router.patch('/:id/accept', requireAuth,requireRole('fournisseur'), async (req, res) => {
   try {
     const { id } = req.params;
 
